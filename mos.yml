@@ -21,6 +21,9 @@ filesystem:
 config_schema:
   - ["wifi.ap.ssid", "ESP32_WS_????????????"]
   - ["wifi.ap.pass", "esp321!!"]
+  - ["ws.pwm.pin", "i", 13, {title: "pin to pwm"}]
+  - ["ws.pwm.freq", "i", 440, {title: "frequency to pwm at"}]
+  - ["ws.pwm.duty", "i", 50, {title: "dutycycle percent"}]
 
 
 
