@@ -24,6 +24,7 @@ config_schema:
   - ["ws.pwm.pin", "i", 13, {title: "pin to pwm"}]
   - ["ws.pwm.freq", "i", 440, {title: "frequency to pwm at"}]
   - ["ws.pwm.duty", "i", 50, {title: "dutycycle percent"}]
+  - ["bt.dev_name", "tims_esp"]
 
 
 
@@ -36,6 +37,7 @@ libs:
   - origin: https://github.com/mongoose-os-libs/http-server
   - origin: https://github.com/mongoose-os-libs/wifi
   - origin: https://github.com/mongoose-os-libs/pwm
+  - origin: https://github.com/mongoose-os-libs/bt-common
 
 # Used by the mos tool to catch mos binaries incompatible with this file format
 manifest_version: 2017-09-29
