@@ -1,6 +1,53 @@
 let L = console.log;
 let S = JSON.stringify;
 
+const BASE_URL = `http://${window.location.hostname}/rpc`
+
+// send a message to an endpoint, simplication wrapper
+// around XMLHttpRequest API.
+// Url is BASE_URL for mgos RPC endpoint
+//
+// @param mg_endpoint the endpoint to call
+// @param params, the parameters to send to the RPC endpoint
+//        implies that req will be HTTP POST
+// @param cb callback will be passed xhr.response if status ==200
+//        err handling is within this function
+function send(mg_endpoint, params, cb) {
+
+  let url = `${BASE_URL}/${mg_endpoint}`
+  let xhr = new XMLHttpRequest();
+  let method = params === null ? 'GET' : 'POST'
+  xhr.open(method, url, true)
+  xhr.responseType = 'json'
+
+  xhr.onload= () => {
+    if (xhr.status === 200) {
+      cb(xhr.response) 
+    } else {
+      clearInterface(`status: ${xhr.status}: ${xhr.statusText}`)
+    }
+  }
+  xhr.onerror = ( err ) => {
+      clearInterface(`communication error: ${err}`)
+  }
+
+  let payload = params === null ? null : S(params)
+  console.log(`sending to ${url} (params: ${payload})`)
+  xhr.send(payload)
+
+}
+
+// Retrieve Sys.GetInfo and append fw_version and fw_id 
+// to the bottom of the page.
+function generateVersionInfo() {
+  let div = document.querySelector("#version_info")
+  if (div) {
+    send( "Sys.GetInfo", null, (resp)=> {
+      console.log(resp)
+      div.textContent = `fw: ${resp.fw_version} (${resp.fw_id})` 
+    })
+  }
+}
 
 /************************************************************************
  * Interface : the following code dynamically creates the ui.
@@ -91,7 +138,6 @@ function configToString() {
 // device
 let config = {} 
 let filter = null
-let defaultFilter = ["openair", "quadsense", "wifi"]
 
 
 // used mainly for errors, clears the interface
@@ -116,6 +162,7 @@ function _populateInterface(cfg) {
   let div = document.querySelector("#main");
   clearInterface()
   for (let childname of Object.keys(cfg)) {
+    L(`filter: ${filter}`)
     if (filter === null || filter.includes(childname)) {
       let child = cfg[childname];
       let ui = createObjectEntry(childname, cfg);
@@ -201,19 +248,39 @@ function populateInterface() {
   send("Config.Get", null, result => {
     _populateInterface(result);
   });
+  generateVersionInfo();
 }
 
 
-async function _main(cfg_to_show) {
+async function _main() {
   L("Main");
-  filter = cfg_to_show 
-  await startCommunication();
   populateInterface();
 }
 
-async function main() {
-  let filter = window.location.search === "?advanced" ? null : defaultFilter
-  _main(filter)
+function setupToggle() {
+  let btn = document.querySelector("#toggle")
+  if (window.location.search === "?all") {
+    btn.value = "show less"
+    btn.onclick = ()=> {
+      window.location = window.location.pathname
+    }
+  } else {
+    btn.value = "show more"
+    btn.onclick = () => { window.location = window.location.pathname + "?all" }
+  }
+
+}
+
+// @param pass in an array of the sections that should be
+//        displayed in the default view.
+async function main(defaultFilter=["wifi"]) {
+  filter = window.location.search === "?all" ? null : defaultFilter
+  setupToggle()
+  if ( "file:" === window.location.protocol ) {
+    test()
+  } else {
+    _main()
+  }
 }
 
 async function test() {
